@@ -11,7 +11,7 @@ use quick_xml::reader::Reader;
 use serde::{Deserialize, Serialize};
 
 #[derive(Parser, Debug)]
-#[clap(name = "ger_open_ai_embed_vec")]
+#[clap(name = "get_open_ai_embed_vec")]
 //#[clap(author, version)]
 //#[clap(about, long_about = None)]
 struct CmdOptions {

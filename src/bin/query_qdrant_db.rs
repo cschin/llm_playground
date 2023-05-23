@@ -4,6 +4,7 @@ use std::io::{BufRead, BufReader};
 use std::time::Duration;
 
 use anyhow::Result;
+use clap::Parser;
 use llm_chain::traits::Embeddings;
 use qdrant_client::prelude::*;
 use qdrant_client::qdrant::with_payload_selector::SelectorOptions;
@@ -22,8 +23,20 @@ struct DocumentRecord {
     embedding_vec: Vec<f32>,
 }
 
+#[derive(Parser, Debug)]
+#[clap(name = "query_qdrant_db")]
+//#[clap(author, version)]
+//#[clap(about, long_about = None)]
+struct CmdOptions {
+    #[clap(long, short, default_value_t = 5)]
+    topn: u64,
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
+
+    let args = CmdOptions::parse();
+
     let mut config = QdrantClientConfig::from_url("http://localhost:6334");
     config.set_timeout(Duration::new(50000, 0));
     let client = QdrantClient::new(Some(config)).await?;
@@ -50,15 +63,12 @@ async fn main() -> Result<()> {
                     query_strings.push(line);
                 } else {
                     if query_strings.is_empty() {
-                        continue
-                    } 
-                    let query_str = query_strings.join("\n"); 
+                        continue;
+                    }
+                    let query_str = query_strings.join("\n");
                     rl.add_history_entry(query_str.clone().as_str())?;
                     let embeddings = llm_chain_openai::embeddings::Embeddings::default();
-                    let embedded_vecs = embeddings
-                        .embed_texts(vec![query_str])
-                        .await
-                        .unwrap();
+                    let embedded_vecs = embeddings.embed_texts(vec![query_str]).await.unwrap();
 
                     //println!("{}", points[1120].text);
                     let search_result = client
@@ -66,7 +76,7 @@ async fn main() -> Result<()> {
                             collection_name: collection_name.into(),
                             vector: embedded_vecs[0].clone(),
                             filter: None,
-                            limit: 4,
+                            limit: args.topn,
                             with_vectors: None,
                             with_payload: Some(WithPayloadSelector {
                                 selector_options: Some(SelectorOptions::Enable(true)),
@@ -98,7 +108,7 @@ async fn main() -> Result<()> {
                         let url = "https://www.ncbi.nlm.nih.gov/books/n/gene/".to_string() + prefix;
                         println!(
 
-                            "================\nscore: {}\ndocument name: {}\nURL: {}\ndocuemnt id: {}\n{}\n================\n",
+                            "+++++++++++++++++++\nscore: {}\ndocument name: {}\nURL: {}\ndocuemnt id: {}\n{}\n===================\n",
                             p.score,
                             file_name,
                             url,
