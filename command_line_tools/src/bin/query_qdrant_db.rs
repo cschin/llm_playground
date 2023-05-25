@@ -39,7 +39,7 @@ async fn main() -> Result<()> {
 
     let mut config = QdrantClientConfig::from_url("http://localhost:6334");
     config.set_timeout(Duration::new(50000, 0));
-    let client = QdrantClient::new(Some(config)).await?;
+    let client = QdrantClient::new(Some(config))?;
     let collections_list = client.list_collections().await?;
     dbg!(collections_list);
     let collection_name = "NBK1116";
@@ -100,6 +100,21 @@ async fn main() -> Result<()> {
                                 .trim_matches('"')
                                 .parse::<usize>()
                                 .expect("number parsing error");
+                        let section_id =
+                            serde_json::to_string(p.payload.get("section_id").unwrap())
+                                .expect("json conversion fails")
+                                .trim_matches('"')
+                                .parse::<usize>()
+                                .expect("number parsing error");
+                        let chunk_id =
+                            serde_json::to_string(p.payload.get("chunk_id").unwrap())
+                                .expect("json conversion fails")
+                                .trim_matches('"')
+                                .parse::<usize>()
+                                .expect("number parsing error");
+                        let text =
+                            serde_json::to_string(p.payload.get("text").unwrap())
+                                .expect("json conversion fails");
                         let tmp = vec![];
                         let keywords = fn_to_keywords.get(&file_name).unwrap_or(&tmp);
                         let mut keywords = keywords.clone();
@@ -108,12 +123,15 @@ async fn main() -> Result<()> {
                         let url = "https://www.ncbi.nlm.nih.gov/books/n/gene/".to_string() + prefix;
                         println!(
 
-                            "+++++++++++++++++++\nscore: {}\ndocument name: {}\nURL: {}\ndocuemnt id: {}\n{}\n===================\n",
+                            "+++++++++++++++++++\nscore: {}\ndocument name: {}\nURL: {}\ndocuemnt id: {}:{}:{}\n{}\n{}\n===================\n",
                             p.score,
                             file_name,
                             url,
                             document_id,
-                            keywords.join("\n")
+                            section_id,
+                            chunk_id,
+                            keywords.join("\n"),
+                            text
                         );
                     });
                     query_strings.clear();

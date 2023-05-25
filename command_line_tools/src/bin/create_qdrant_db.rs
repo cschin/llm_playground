@@ -24,7 +24,7 @@ struct DocumentRecord {
 async fn main() -> Result<()> {
     let mut config = QdrantClientConfig::from_url("http://localhost:6334");
     config.set_timeout(Duration::new(50000, 0));
-    let client = QdrantClient::new(Some(config)).await?;
+    let client = QdrantClient::new(Some(config))?;
     let collections_list = client.list_collections().await?;
     dbg!(collections_list);
     let collection_name = "NBK1116";
@@ -38,6 +38,7 @@ async fn main() -> Result<()> {
                     distance: Distance::Cosine.into(),
                     hnsw_config: None,
                     quantization_config: None,
+                    on_disk: Some(false),
                 })),
             }),
             ..Default::default()
