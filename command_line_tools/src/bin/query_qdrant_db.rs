@@ -34,7 +34,6 @@ struct CmdOptions {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-
     let args = CmdOptions::parse();
 
     let mut config = QdrantClientConfig::from_url("http://localhost:6334");

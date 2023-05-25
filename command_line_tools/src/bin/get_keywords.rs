@@ -47,16 +47,15 @@ fn get_keyword_groups(path: &PathBuf) -> Vec<String> {
                     e.attributes().for_each(|attr| {
                         if let Ok(attr) = attr {
                             if attr.key.as_ref() == b"kwd-group-type" {
-                                group_type = String::from_utf8_lossy(&attr.value.to_owned()).to_string();
+                                group_type =
+                                    String::from_utf8_lossy(&attr.value.to_owned()).to_string();
                             }
                         };
                     });
                     let span = reader.read_text(e.name()).expect("err");
                     let just_string = remove_xml_tags(&span, " ");
                     //dbg!(&just_string);
-                    txt.push(
-                        [group_type+":", just_string].join(" "),
-                    );
+                    txt.push([group_type + ":", just_string].join(" "));
                 }
                 _ => (),
             },
@@ -109,9 +108,9 @@ async fn main() {
 
         //println!("Load {path:?}");
         let doc = get_keyword_groups(&path);
-        let jsonl_record = serde_json::to_string(&(document_id, file_name, doc)).expect("json conversion fails");
+        let jsonl_record =
+            serde_json::to_string(&(document_id, file_name, doc)).expect("json conversion fails");
         println!("{}", jsonl_record);
         document_id += 1;
     }
 }
-

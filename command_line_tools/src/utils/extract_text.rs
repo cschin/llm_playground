@@ -42,8 +42,6 @@ pub struct PdfText {
     pub errors: Vec<String>,
 }
 
-
-
 pub fn filter_func(object_id: (u32, u16), object: &mut Object) -> Option<((u32, u16), Object)> {
     if IGNORE.contains(&object.type_name().unwrap_or_default()) {
         return None;
@@ -66,7 +64,8 @@ pub fn filter_func(object_id: (u32, u16), object: &mut Object) -> Option<((u32, 
 }
 
 pub fn load_pdf<P: AsRef<Path>>(path: P) -> Result<Document, Error> {
-    Document::load_filtered(path, filter_func).map_err(|e| Error::new(ErrorKind::Other, e.to_string()))
+    Document::load_filtered(path, filter_func)
+        .map_err(|e| Error::new(ErrorKind::Other, e.to_string()))
 }
 
 pub fn get_pdf_text(doc: &Document) -> Result<PdfText, Error> {
@@ -82,7 +81,9 @@ pub fn get_pdf_text(doc: &Document) -> Result<PdfText, Error> {
                 let text = doc.extract_text(&[page_num]).map_err(|e| {
                     Error::new(
                         ErrorKind::Other,
-                        format!("Failed to extract text from page {page_num} id={page_id:?}: {e:?}"),
+                        format!(
+                            "Failed to extract text from page {page_num} id={page_id:?}: {e:?}"
+                        ),
                     )
                 })?;
                 Ok((
@@ -107,14 +108,17 @@ pub fn get_pdf_text(doc: &Document) -> Result<PdfText, Error> {
     Ok(pdf_text)
 }
 
-pub fn pdf2text<P: AsRef<Path> + Debug>(path: P, output: P, pretty: bool, password: &str) -> Result<(), Error> {
+pub fn pdf2text<P: AsRef<Path> + Debug>(
+    path: P,
+    output: P,
+    pretty: bool,
+    password: &str,
+) -> Result<(), Error> {
     println!("Load {path:?}");
     let mut doc = load_pdf(&path)?;
     if doc.is_encrypted() {
         doc.decrypt(password)
-            .map_err(|_err|
-                Error::new(ErrorKind::InvalidInput, "Failed to decrypt")
-            )?;
+            .map_err(|_err| Error::new(ErrorKind::InvalidInput, "Failed to decrypt"))?;
     }
     let text = get_pdf_text(&doc)?;
     if !text.errors.is_empty() {
@@ -132,4 +136,3 @@ pub fn pdf2text<P: AsRef<Path> + Debug>(path: P, output: P, pretty: bool, passwo
     f.write_all(data.as_bytes())?;
     Ok(())
 }
-

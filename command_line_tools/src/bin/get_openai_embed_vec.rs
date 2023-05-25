@@ -171,8 +171,8 @@ async fn main() {
             .map(|chunk| chunk.4.clone())
             .collect::<Vec<String>>();
         if all_chunk_text.len() == 0 {
-            continue
-        } 
+            continue;
+        }
 
         let embeddings = llm_chain_openai::embeddings::Embeddings::default();
         let embedded_vecs = embeddings.embed_texts(all_chunk_text).await.unwrap();
