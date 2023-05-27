@@ -7,6 +7,11 @@ use axum::{
     Json, Router,
 };
 use clap::Parser;
+use llm_chain::{
+    chains::conversation::Chain, executor, output::Output, parameters, prompt, step::Step,
+};
+use llm_chain_openai::chatgpt::{Model, PerInvocation, PerExecutor};
+//use llm_chain_openai::chatgpt::{Executor, Model, PerExecutor, PerInvocation};
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::{
@@ -53,10 +58,16 @@ async fn main() {
     // build our application with a route
     let app = Router::new()
         .route(
-            "/api/post_query",
-            post({
-                move |params| post_query(params)
-            }),
+            "/api/post_query_for_similarity_search",
+            post( move |params| post_query_for_similarity_search(params) ),
+        )
+        .route(
+            "/api/post_query_for_answer_of_a_question",
+            post( move |params| post_query_for_answer_of_a_question(params) ),
+        )
+        .route(
+            "/api/post_query_for_summary_of_a_topic",
+            post( move |params| post_query_for_summary_of_a_topic(params) ),
         )
         .layer(
             CorsLayer::new()
@@ -116,10 +127,155 @@ struct QueryText {
     text: String,
 }
 
-async fn post_query(Json(query_text): Json<QueryText>) -> Json<Option<Vec<DocumentRecord>>> {
-    let return_docs = query_doc_vec_db(&query_text.text, query_text.topn);
+async fn post_query_for_similarity_search(
+    Json(query): Json<QueryText>,
+) -> Json<Option<Vec<DocumentRecord>>> {
+    let return_docs = query_doc_vec_db(&query.text, query.topn);
     match return_docs.await {
         Ok(r) => Json(Some(r)),
         _ => Json(None),
     }
+}
+
+async fn post_query_for_answer_of_a_question(
+    Json(query): Json<QueryText>,
+) -> Json<Option<Vec<DocumentRecord>>> {
+    let docs = query_doc_vec_db(&query.text, query.topn).await;
+ 
+
+    let context = if let Ok(records) = docs {
+        records
+            .iter()
+            .map(|record| {
+                let record = record.clone();
+                let mut out_strings = Vec::<String>::new();
+                if record.keywords.is_some() {
+                    out_strings.push(format!("KEYWORDS: {}", record.keywords.unwrap()))
+                };
+                if record.url.is_some() {
+                    out_strings.push(format!("URL: {}", record.url.unwrap()))
+                };
+                if record.text.is_some() {
+                    out_strings.push(format!("CONTENT: {}", record.text.unwrap()))
+                };
+                out_strings.join("\n")
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
+    } else {
+        "".to_string()
+    };
+
+    if context.is_empty() {
+        return Json(None);
+    }
+
+    let model = Model::Other("gpt-4".to_string());
+    //let model = Model::ChatGPT3_5Turbo;
+    let per_invocation = PerInvocation::new().for_model(model);
+    let per_executor = PerExecutor { api_key: None };
+    let exec = executor!(chatgpt, per_executor, per_invocation).unwrap();
+
+
+
+    let mut chain = Chain::new(
+                prompt!(system: "You are an assistant for making scientific recommendations.")).unwrap();
+    dbg!(&context); 
+
+    let res = chain
+        .send_message(
+            Step::for_prompt_template(prompt!(user: "given the context below\n: CONTEXT: {{context}} \n\n answer the question: {{question}}")), 
+            // Create a Parameters object with key-value pairs for the placeholders
+            &parameters!("context" => &context[..],
+                         "question" => &query.text[..]),
+            &exec,
+        )
+        .await
+        .unwrap();
+
+    let text = res.primary_textual_output().await;
+    let r = DocumentRecord {
+        score: 1.0,
+        file_name: None,
+        url: None,
+        document_id: None,
+        section_id: None,
+        chunk_id: None,
+        keywords: None,
+        text
+    };
+    Json(Some(vec![r]))
+}
+
+
+async fn post_query_for_summary_of_a_topic(
+    Json(query): Json<QueryText>,
+) -> Json<Option<Vec<DocumentRecord>>> {
+    let docs = query_doc_vec_db(&query.text, query.topn).await;
+ 
+
+    let context = if let Ok(records) = docs {
+        records
+            .iter()
+            .map(|record| {
+                let record = record.clone();
+                let mut out_strings = Vec::<String>::new();
+                if record.keywords.is_some() {
+                    out_strings.push(format!("KEYWORDS: {}", record.keywords.unwrap()))
+                };
+                if record.url.is_some() {
+                    out_strings.push(format!("URL: {}", record.url.unwrap()))
+                };
+                if record.text.is_some() {
+                    out_strings.push(format!("CONTENT: {}", record.text.unwrap()))
+                };
+                out_strings.join("\n")
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
+    } else {
+        "".to_string()
+    };
+
+    if context.is_empty() {
+        return Json(None);
+    }
+
+    //let model = Model::Other("text-davinci-002".to_string());
+    let model = Model::ChatGPT3_5Turbo;
+    let per_invocation = PerInvocation::new().for_model(model);
+    let per_executor = PerExecutor { api_key: None };
+    let exec = executor!(chatgpt, per_executor, per_invocation).unwrap();
+
+
+
+    let mut chain = Chain::new(
+                prompt!(system: "You are an assistant for making scientific recommendations.")).unwrap();
+    dbg!(&context); 
+
+    let res = chain
+        .send_message(
+            Step::for_prompt_template(prompt!(user: "given the context below\n: CONTEXT: {{context}} \n\n Please write an essay about the topic {{topic}} with evidences and references")), 
+            // Create a Parameters object with key-value pairs for the placeholders
+            &parameters!("context" => &context[..],
+                         "topic" => &query.text[..]),
+            &exec,
+        )
+        .await
+        .unwrap();
+
+    dbg!(res.clone());
+
+    let text = res.primary_textual_output().await;
+    let r = DocumentRecord {
+        score: 1.0,
+        file_name: None,
+        url: None,
+        document_id: None,
+        section_id: None,
+        chunk_id: None,
+        keywords: None,
+        text
+    };
+    Json(Some(vec![r]))
 }

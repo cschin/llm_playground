@@ -10,16 +10,16 @@ use qdrant_client::qdrant::with_payload_selector::SelectorOptions;
 use qdrant_client::qdrant::WithPayloadSelector;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DocumentRecord {
-    score: f32,
-    file_name: Option<String>,
-    url: Option<String>,
-    document_id: Option<usize>,
-    section_id: Option<usize>,
-    chunk_id: Option<usize>,
-    keywords: Option<String>,
-    text: Option<String>,
+    pub score: f32,
+    pub file_name: Option<String>,
+    pub url: Option<String>,
+    pub document_id: Option<usize>,
+    pub section_id: Option<usize>,
+    pub chunk_id: Option<usize>,
+    pub keywords: Option<String>,
+    pub text: Option<String>,
 }
 
 pub async fn query_doc_vec_db(text: &String, topn: u64) -> Result<Vec<DocumentRecord>> {
