@@ -60,7 +60,7 @@ fn App(cx: Scope) -> Element {
                             class: "px-2 py-1 h-full middle none rounded-lg bg-blue-600 text-white",
                             onclick: move |_evt| {
                                 let input = current_input.get().clone();
-                                post_query(cx, &"post_query_for_similarity_search", &input, diags);
+                                post_query(cx, "post_query_for_similarity_search", &input, diags);
                             },
                             "Find Similar Text"
                         }
@@ -70,7 +70,7 @@ fn App(cx: Scope) -> Element {
                             class: "px-2 py-1 h-full middle none rounded-lg bg-blue-600 text-white",
                             onclick: move |_evt| {
                                 let input = current_input.get().clone();
-                                post_query(cx, &"post_query_for_summary_of_a_topic", &input, diags);
+                                post_query(cx, "post_query_for_summary_of_a_topic", &input, diags);
 
                             },
                             "Write a Summary "
@@ -81,7 +81,7 @@ fn App(cx: Scope) -> Element {
                             class: "px-2 py-1 h-full middle none rounded-lg bg-blue-600 text-white",
                             onclick: move |_evt| {
                                 let input = current_input.get().clone();
-                                post_query(cx, &"post_query_for_answer_of_a_question", &input, diags);
+                                post_query(cx, "post_query_for_answer_of_a_question", &input, diags);
                             },
                             "Get an Answer"
                         }
@@ -144,10 +144,10 @@ fn Dialogs<'a>(cx: Scope<'a>, diags: &'a UseRef<Vec<(String, Vec<DocumentRecord>
 
 fn post_query<'a, T>(
     cx: Scope<'a, T>,
-    entry: &'a str,
+    entry: &str,
     query: &'a str,
     records: &'a UseRef<Vec<(String, Vec<DocumentRecord>)>>,
-) -> () {
+) {
     let query = QueryText {
         text: query.to_string(),
         topn: 3,
