@@ -59,15 +59,15 @@ async fn main() {
     let app = Router::new()
         .route(
             "/api/post_query_for_similarity_search",
-            post( move |params| post_query_for_similarity_search(params) ),
+            post(  post_query_for_similarity_search ),
         )
         .route(
             "/api/post_query_for_answer_of_a_question",
-            post( move |params| post_query_for_answer_of_a_question(params) ),
+            post( post_query_for_answer_of_a_question ),
         )
         .route(
             "/api/post_query_for_summary_of_a_topic",
-            post( move |params| post_query_for_summary_of_a_topic(params) ),
+            post( post_query_for_summary_of_a_topic ),
         )
         .layer(
             CorsLayer::new()
@@ -104,7 +104,7 @@ async fn main() {
                 }
                 Err(_err) => Response::builder()
                     .status(StatusCode::INTERNAL_SERVER_ERROR)
-                    .body(boxed(Body::from(format!("internal errors"))))
+                    .body(boxed(Body::from("internal errors")))
                     .expect("error response"),
             }
         }));

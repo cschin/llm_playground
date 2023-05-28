@@ -33,7 +33,7 @@ fn main() {
 
 // create a component that renders a div with the text "Hello, world!"
 fn App(cx: Scope) -> Element {
-    let diags = use_ref(cx, || Vec::<(String, Vec<DocumentRecord>)>::new());
+    let diags = use_ref(cx,  Vec::<(String, Vec<DocumentRecord>)>::new);
     let current_input = use_state(cx, || "Tell me about Floating-Harbor Syndrome".to_string());
 
     cx.render(rsx! {
@@ -100,7 +100,6 @@ fn Dialogs<'a>(cx: Scope<'a>, diags: &'a UseRef<Vec<(String, Vec<DocumentRecord>
         div { class: "flex flex-col",
             diags.read().iter().map( move |(input, output)| {
                 let input = input.clone();
-                let output = output.clone();
                 rsx! {
                     div {
                         div {
@@ -129,7 +128,7 @@ fn Dialogs<'a>(cx: Scope<'a>, diags: &'a UseRef<Vec<(String, Vec<DocumentRecord>
                                 let text = output.text.clone().unwrap(); 
 
                                 rsx!{ p{ "TEXT:\n" }
-                                text.split("\n").into_iter().map(|text|  rsx! {p {text} br {}}) }
+                                text.split('\n').map(|text|  rsx! {p {text} br {}}) }
                             }
                             br {}
 

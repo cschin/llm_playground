@@ -31,7 +31,7 @@ fn get_keyword_groups(path: &PathBuf) -> Vec<String> {
     let mut file = BufReader::new(File::open(path).expect("file open error"));
     let mut buf = Vec::new();
     file.read_to_end(&mut buf).expect("file reading error");
-    let text = String::from_utf8_lossy(&buf[..]).to_owned();
+    let text = String::from_utf8_lossy(&buf[..]);
     let mut reader = Reader::from_str(&text);
     reader.trim_text(true);
     let mut buf = Vec::new();
@@ -48,7 +48,7 @@ fn get_keyword_groups(path: &PathBuf) -> Vec<String> {
                         if let Ok(attr) = attr {
                             if attr.key.as_ref() == b"kwd-group-type" {
                                 group_type =
-                                    String::from_utf8_lossy(&attr.value.to_owned()).to_string();
+                                    String::from_utf8_lossy(&attr.value).to_string();
                             }
                         };
                     });
@@ -94,9 +94,9 @@ async fn main() {
     //CmdOptions::command().version(VERSION_STRING).get_matches();
     let args = CmdOptions::parse();
     let mut document_id_tuple: Vec<(String, usize)> = Vec::new();
-    let mut document_id = 0_usize;
+    //let mut document_id = 0_usize;
     let path_to_nxm_files = args.path_to_nxm_files + "/*.nxml";
-    for e in glob(&path_to_nxm_files).expect("Failed to read glob pattern") {
+    for (document_id, e) in glob(&path_to_nxm_files).expect("Failed to read glob pattern").enumerate() {
         let path = e.unwrap();
         let file_name = path
             .as_path()
@@ -111,6 +111,5 @@ async fn main() {
         let jsonl_record =
             serde_json::to_string(&(document_id, file_name, doc)).expect("json conversion fails");
         println!("{}", jsonl_record);
-        document_id += 1;
     }
 }

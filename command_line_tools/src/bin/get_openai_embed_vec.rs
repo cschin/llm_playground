@@ -33,7 +33,7 @@ fn get_nxml_text(path: &PathBuf) -> Vec<String> {
     let mut file = BufReader::new(File::open(path).expect("file open error"));
     let mut buf = Vec::new();
     file.read_to_end(&mut buf).expect("file reading error");
-    let text = String::from_utf8_lossy(&buf[..]).to_owned();
+    let text = String::from_utf8_lossy(&buf[..]);
     let mut reader = Reader::from_str(&text);
     reader.trim_text(true);
     let mut buf = Vec::new();
@@ -75,7 +75,7 @@ fn get_nxml_text(path: &PathBuf) -> Vec<String> {
                 }
                 b"ref" => {
                     let span = reader.read_text(e.name()).expect("err");
-                    let just_string = remove_xml_tags(&span, &" ");
+                    let just_string = remove_xml_tags(&span, " ");
                     sec_txt.push([String::from("reference: "), just_string].join(""));
                 }
                 _ => (),
@@ -140,7 +140,7 @@ async fn main() {
         let mut all_chunk = Vec::new();
         doc.into_iter()
             .enumerate()
-            .filter(|(_section_id, section)| section.len() > 0)
+            .filter(|(_section_id, section)| !section.is_empty())
             .for_each(|(section_id, section)| {
                 let splitter = NaiveWhitespaceSplitter;
                 let max_tokens_per_chunk = 256;
@@ -170,7 +170,7 @@ async fn main() {
             .iter()
             .map(|chunk| chunk.4.clone())
             .collect::<Vec<String>>();
-        if all_chunk_text.len() == 0 {
+        if all_chunk_text.is_empty() {
             continue;
         }
 
@@ -189,8 +189,7 @@ async fn main() {
                     text,
                     embedding_vec,
                 };
-                let jsonl_record = serde_json::to_string(&r).expect("json conversion fails");
-                jsonl_record
+                serde_json::to_string(&r).expect("json conversion fails")
             })
             .for_each(|r| println!("{}", r));
         document_id += 1;

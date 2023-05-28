@@ -22,7 +22,7 @@ pub struct DocumentRecord {
     pub text: Option<String>,
 }
 
-pub async fn query_doc_vec_db(text: &String, topn: u64) -> Result<Vec<DocumentRecord>> {
+pub async fn query_doc_vec_db(text: &str, topn: u64) -> Result<Vec<DocumentRecord>> {
     let mut config = QdrantClientConfig::from_url("http://localhost:6334");
     config.set_timeout(Duration::new(50000, 0));
     let client = QdrantClient::new(Some(config))?;
@@ -32,13 +32,13 @@ pub async fn query_doc_vec_db(text: &String, topn: u64) -> Result<Vec<DocumentRe
 
     let mut fn_to_keywords = HashMap::<String, Vec<String>>::default();
     let keyword_file = BufReader::new(File::open("../test_doc/keywords.jsonl")?);
-    keyword_file.lines().into_iter().for_each(|line| {
+    keyword_file.lines().for_each(|line| {
         let (_doc_id, file_name, keywords): (usize, String, Vec<String>) =
             serde_json::from_str(line.unwrap().as_str()).expect("failed json conversion");
         fn_to_keywords.insert(file_name, keywords);
     });
 
-    let query_str = text.clone();
+    let query_str = text.to_owned();
     println!("{}", query_str.clone());
     let embeddings = llm_chain_openai::embeddings::Embeddings::default();
     let embedded_vecs = embeddings.embed_texts(vec![query_str.clone()]).await.unwrap();
@@ -94,7 +94,7 @@ pub async fn query_doc_vec_db(text: &String, topn: u64) -> Result<Vec<DocumentRe
         let keywords = fn_to_keywords.get(&file_name).unwrap_or(&tmp);
         let mut keywords = keywords.clone();
         keywords.sort();
-        let prefix = file_name.as_str().split(".").next().unwrap();
+        let prefix = file_name.as_str().split('.').next().unwrap();
         let url = "https://www.ncbi.nlm.nih.gov/books/n/gene/".to_string() + prefix;
         let return_doc = DocumentRecord {
             score: p.score,

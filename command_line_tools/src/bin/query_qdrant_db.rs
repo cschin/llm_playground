@@ -45,7 +45,7 @@ async fn main() -> Result<()> {
 
     let mut fn_to_keywords = HashMap::<String, Vec<String>>::default();
     let keyword_file = BufReader::new(File::open("./test_doc/keywords.jsonl")?);
-    keyword_file.lines().into_iter().for_each(|line| {
+    keyword_file.lines().for_each(|line| {
         let (_doc_id, file_name, keywords): (usize, String, Vec<String>) =
             serde_json::from_str(line.unwrap().as_str()).expect("failed json conversion");
         fn_to_keywords.insert(file_name, keywords);
@@ -58,7 +58,7 @@ async fn main() -> Result<()> {
         match readline {
             Ok(line) => {
                 //println!("Line: {}", line);
-                if line.trim().len() > 0 {
+                if !line.trim().is_empty() {
                     query_strings.push(line);
                 } else {
                     if query_strings.is_empty() {
@@ -118,7 +118,7 @@ async fn main() -> Result<()> {
                         let keywords = fn_to_keywords.get(&file_name).unwrap_or(&tmp);
                         let mut keywords = keywords.clone();
                         keywords.sort();
-                        let prefix = file_name.as_str().split(".").next().unwrap();
+                        let prefix = file_name.as_str().split('.').next().unwrap();
                         let url = "https://www.ncbi.nlm.nih.gov/books/n/gene/".to_string() + prefix;
                         println!(
 
