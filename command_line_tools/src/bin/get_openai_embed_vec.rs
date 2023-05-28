@@ -195,24 +195,3 @@ async fn main() {
         document_id += 1;
     }
 }
-
-// fn _main() {
-//     for e in glob("./test_doc/gene_NBK1116/*.pdf").expect("Failed to read glob pattern") {
-//         let path = e.unwrap();
-//         println!("{}", path.clone().display());
-//         //let bytes = std::fs::read(path).unwrap();
-//         println!("Load {path:?}");
-//         let doc = load_pdf(&path).expect("load_pdf fails");
-
-//         let text = get_pdf_text(&doc).expect("get pdf text fails");
-//         if !text.errors.is_empty() {
-//             eprintln!("{path:?} has {} errors:", text.errors.len());
-//             for error in &text.errors[..10] {
-//                 eprintln!("{error:?}");
-//             }
-//         }
-//         let json_text = serde_json::to_string_pretty(&text).unwrap();
-//         println!("{}", json_text);
-//         break;
-//     }
-// }
