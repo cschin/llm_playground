@@ -1,9 +1,9 @@
 use clap::Parser;
+use std::collections::HashMap;
 use std::fs::File;
-use std::io::{BufReader, Read};
+use std::io::{BufRead, BufReader, Read};
 use std::path::PathBuf;
 
-use glob::glob;
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
 use serde::{Deserialize, Serialize};
@@ -47,8 +47,7 @@ fn get_keyword_groups(path: &PathBuf) -> Vec<String> {
                     e.attributes().for_each(|attr| {
                         if let Ok(attr) = attr {
                             if attr.key.as_ref() == b"kwd-group-type" {
-                                group_type =
-                                    String::from_utf8_lossy(&attr.value).to_string();
+                                group_type = String::from_utf8_lossy(&attr.value).to_string();
                             }
                         };
                     });
@@ -93,23 +92,23 @@ fn remove_xml_tags(xml: &str, sep: &str) -> String {
 async fn main() {
     //CmdOptions::command().version(VERSION_STRING).get_matches();
     let args = CmdOptions::parse();
-    let mut document_id_tuple: Vec<(String, usize)> = Vec::new();
     //let mut document_id = 0_usize;
-    let path_to_nxm_files = args.path_to_nxm_files + "/*.nxml";
-    for (document_id, e) in glob(&path_to_nxm_files).expect("Failed to read glob pattern").enumerate() {
-        let path = e.unwrap();
-        let file_name = path
-            .as_path()
-            .file_name()
-            .unwrap()
-            .to_string_lossy()
-            .to_string();
-        document_id_tuple.push((file_name.clone(), document_id));
+    //let path_to_nxm_files = args.path_to_nxm_files + "/*.nxml";
 
-        //println!("Load {path:?}");
-        let doc = get_keyword_groups(&path);
-        let jsonl_record =
-            serde_json::to_string(&(document_id, file_name, doc)).expect("json conversion fails");
-        println!("{}", jsonl_record);
-    }
+    let embedding_data_file =
+        BufReader::new(File::open("./test_doc/embedding.jsonl").expect("can open embedding.jsonl"));
+    let mut doc_id_keywords = HashMap::<usize, String>::new();
+    embedding_data_file.lines().for_each(|line| {
+        let r: DocumentRecord =
+            serde_json::from_str(line.unwrap().as_str()).expect("failed json conversion");
+        let doc_id = r.document_id;
+        if !doc_id_keywords.contains_key(&doc_id) {
+            let path = PathBuf::from(args.path_to_nxm_files.clone() + "/" + r.file_name.as_str());
+            let doc = get_keyword_groups(&path);
+            let jsonl_record = serde_json::to_string(&(r.document_id, r.file_name, doc))
+                .expect("json conversion fails");
+            println!("{}", jsonl_record);
+            doc_id_keywords.insert(doc_id, jsonl_record);
+        }
+    });
 }
