@@ -80,14 +80,13 @@ fn get_nxml_text(path: &PathBuf) -> Vec<String> {
                 }
                 _ => (),
             },
-            Ok(Event::End(e)) => match e.name().as_ref() {
-                b"sec" => {
+            Ok(Event::End(e)) => {
+                if b"sec" == e.name().as_ref() {
                     txt.push(sec_txt.join("\n"));
                     //txt.push(String::from("\n\n"));
                     sec_txt.clear();
                 }
-                _ => (),
-            },
+            }
             Ok(Event::Eof) => break,
             _ => (),
         }

@@ -60,7 +60,7 @@ fn App(cx: Scope) -> Element {
                             class: "px-2 py-1 h-full middle none rounded-lg bg-blue-600 text-white",
                             onclick: move |_evt| {
                                 let input = current_input.get().clone();
-                                post_query(cx, "post_query_for_similarity_search".to_string(), &input, diags);
+                                post_query(cx, &"post_query_for_similarity_search", &input, diags);
                             },
                             "Find Similar Text"
                         }
@@ -70,7 +70,7 @@ fn App(cx: Scope) -> Element {
                             class: "px-2 py-1 h-full middle none rounded-lg bg-blue-600 text-white",
                             onclick: move |_evt| {
                                 let input = current_input.get().clone();
-                                post_query(cx, "post_query_for_summary_of_a_topic".to_string(), &input, diags);
+                                post_query(cx, &"post_query_for_summary_of_a_topic", &input, diags);
 
                             },
                             "Write a Summary "
@@ -81,7 +81,7 @@ fn App(cx: Scope) -> Element {
                             class: "px-2 py-1 h-full middle none rounded-lg bg-blue-600 text-white",
                             onclick: move |_evt| {
                                 let input = current_input.get().clone();
-                                post_query(cx, "post_query_for_answer_of_a_question".to_string(), &input, diags);
+                                post_query(cx, &"post_query_for_answer_of_a_question", &input, diags);
                             },
                             "Get an Answer"
                         }
@@ -144,19 +144,20 @@ fn Dialogs<'a>(cx: Scope<'a>, diags: &'a UseRef<Vec<(String, Vec<DocumentRecord>
 
 fn post_query<'a, T>(
     cx: Scope<'a, T>,
-    entry: String,
-    query: &'a String,
+    entry: &'a str,
+    query: &'a str,
     records: &'a UseRef<Vec<(String, Vec<DocumentRecord>)>>,
 ) -> () {
     let query = QueryText {
-        text: query.clone(),
+        text: query.to_string(),
         topn: 3,
     };
     let records = records.to_owned();
+    let entry = entry.to_owned();
     cx.spawn({
         async move {
             let client = reqwest::Client::new();
-            let url = base_url() + "/api/" + &entry[..];
+            let url = base_url() + "/api/" + &entry;
             let response = client
                 .post(url)
                 .json(&query)
@@ -168,8 +169,8 @@ fn post_query<'a, T>(
             log::debug!("{:?}", response);
             match response {
                 Ok(val) => {
-                    if val.is_some() {
-                        records.write().push((query.text, val.unwrap()));
+                    if let Some(val) = val {
+                        records.write().push((query.text, val));
                     };
                 }
                 Err(e) => {

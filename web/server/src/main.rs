@@ -195,14 +195,8 @@ async fn post_query_for_answer_of_a_question(
 
     let text = res.primary_textual_output().await;
     let r = DocumentRecord {
-        score: 1.0,
-        file_name: None,
-        url: None,
-        document_id: None,
-        section_id: None,
-        chunk_id: None,
-        keywords: None,
-        text
+        text,
+        ..Default::default()
     };
     Json(Some(vec![r]))
 }
@@ -268,14 +262,15 @@ async fn post_query_for_summary_of_a_topic(
 
     let text = res.primary_textual_output().await;
     let r = DocumentRecord {
-        score: 1.0,
+        score: None,
         file_name: None,
         url: None,
         document_id: None,
         section_id: None,
         chunk_id: None,
         keywords: None,
-        text
+        text,
+        ..Default::default()
     };
     Json(Some(vec![r]))
 }

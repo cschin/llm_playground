@@ -41,8 +41,8 @@ fn get_keyword_groups(path: &PathBuf) -> Vec<String> {
     loop {
         match reader.read_event_into(&mut buf) {
             Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
-            Ok(Event::Start(e)) => match e.name().as_ref() {
-                b"kwd-group" => {
+            Ok(Event::Start(e)) => {
+                if let b"kwd-group" = e.name().as_ref() {
                     let mut group_type = String::new();
                     e.attributes().for_each(|attr| {
                         if let Ok(attr) = attr {
@@ -56,8 +56,7 @@ fn get_keyword_groups(path: &PathBuf) -> Vec<String> {
                     //dbg!(&just_string);
                     txt.push([group_type + ":", just_string].join(" "));
                 }
-                _ => (),
-            },
+            }
             Ok(Event::Eof) => break,
             _ => (),
         }
@@ -102,13 +101,14 @@ async fn main() {
         let r: DocumentRecord =
             serde_json::from_str(line.unwrap().as_str()).expect("failed json conversion");
         let doc_id = r.document_id;
-        if !doc_id_keywords.contains_key(&doc_id) {
+
+        doc_id_keywords.entry(doc_id).or_insert_with(|| {
             let path = PathBuf::from(args.path_to_nxm_files.clone() + "/" + r.file_name.as_str());
             let doc = get_keyword_groups(&path);
             let jsonl_record = serde_json::to_string(&(r.document_id, r.file_name, doc))
                 .expect("json conversion fails");
             println!("{}", jsonl_record);
-            doc_id_keywords.insert(doc_id, jsonl_record);
-        }
+            jsonl_record
+        });
     });
 }
