@@ -11,7 +11,7 @@ struct QueryText {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DocumentRecord {
-    score: f32,
+    score: Option<f32>,
     file_name: Option<String>,
     url: Option<String>,
     document_id: Option<usize>,

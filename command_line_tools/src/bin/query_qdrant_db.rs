@@ -41,7 +41,7 @@ async fn main() -> Result<()> {
     let client = QdrantClient::new(Some(config))?;
     let collections_list = client.list_collections().await?;
     dbg!(collections_list);
-    let collection_name = "NBK1116";
+    let collection_name = "NBK1116_chunks";
 
     let mut fn_to_keywords = HashMap::<String, Vec<String>>::default();
     let keyword_file = BufReader::new(File::open("./test_doc/keywords.jsonl")?);
