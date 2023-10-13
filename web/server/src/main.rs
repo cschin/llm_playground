@@ -130,7 +130,7 @@ struct QueryText {
 async fn post_query_for_similarity_search(
     Json(query): Json<QueryText>,
 ) -> Json<Option<Vec<DocumentRecord>>> {
-    let return_docs = query_doc_vec_db(&query.text, query.topn);
+    let return_docs = query_for_sections(&query.text, query.topn);
     match return_docs.await {
         Ok(r) => Json(Some(r)),
         _ => Json(None),
@@ -140,7 +140,7 @@ async fn post_query_for_similarity_search(
 async fn post_query_for_answer_of_a_question(
     Json(query): Json<QueryText>,
 ) -> Json<Option<Vec<DocumentRecord>>> {
-    let docs = query_doc_vec_db(&query.text, query.topn).await;
+    let docs = query_for_sections(&query.text, query.topn).await;
  
 
     let context = if let Ok(records) = docs {
@@ -170,8 +170,8 @@ async fn post_query_for_answer_of_a_question(
         return Json(None);
     }
 
-    let model = Model::Other("gpt-4".to_string());
-    //let model = Model::ChatGPT3_5Turbo;
+    //let model = Model::Other("gpt-4".to_string());
+    let model = Model::ChatGPT3_5Turbo;
     let per_invocation = PerInvocation::new().for_model(model);
     let per_executor = PerExecutor { api_key: None };
     let exec = executor!(chatgpt, per_executor, per_invocation).unwrap();
@@ -205,7 +205,7 @@ async fn post_query_for_answer_of_a_question(
 async fn post_query_for_summary_of_a_topic(
     Json(query): Json<QueryText>,
 ) -> Json<Option<Vec<DocumentRecord>>> {
-    let docs = query_doc_vec_db(&query.text, query.topn).await;
+    let docs = query_for_sections(&query.text, query.topn).await;
  
 
     let context = if let Ok(records) = docs {
