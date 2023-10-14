@@ -83,9 +83,9 @@ async fn main() -> Result<()> {
 
         let e = sec_to_records
             .entry((file_name.clone(), doc_id, sec_id))
-            .or_insert_with(Vec::new);
+            .or_default();
         e.push(r);
-        let e = doc_to_records.entry((file_name, doc_id)).or_insert_with(Vec::new);
+        let e = doc_to_records.entry((file_name, doc_id)).or_default();
         e.push(r);
     });
 

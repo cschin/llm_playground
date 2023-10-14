@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::time::Duration;
-use tokio::task;
 
 use anyhow::Result;
 use llm_chain::traits::Embeddings;
