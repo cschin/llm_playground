@@ -9,7 +9,7 @@ with gr.Blocks() as demo:
 
     chatbot = gr.Chatbot()
     msg = gr.Textbox(label="Input your query about Gene Review")
-    query_type = gr.Dropdown(choices=["Summary", "Q&A"], value=0, type="index", label="Query Type")
+    query_type = gr.Dropdown(choices=["Summary", "Q&A"], value="Summary", type="index", label="Query Type")
     clear = gr.ClearButton([msg, chatbot])
 
     def respond(message, chat_history, dropdown):
