@@ -143,8 +143,7 @@ pub async fn query_for_sections(text: &str, topn: u64) -> Result<Vec<DocumentRec
     let embeddings = llm_chain_openai::embeddings::Embeddings::default();
     let embedded_vecs = embeddings
         .embed_texts(vec![query_str.clone()])
-        .await
-        .unwrap();
+        .await?;
 
     //println!("{}", points[1120].text);
     let search_result = client

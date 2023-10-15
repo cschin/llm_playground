@@ -21,8 +21,10 @@ with gr.Blocks() as demo:
 
 
         bot_message = json.loads(r.text) 
-        bot_message = bot_message[0]["text"]
-        chat_history.append((message, bot_message))
+        if bot_message is not None:
+            bot_message = bot_message[0]["text"]
+            chat_history.append((message, bot_message))
+            
         time.sleep(2)
         return "", chat_history
 
