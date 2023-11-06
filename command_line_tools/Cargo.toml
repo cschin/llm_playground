@@ -9,12 +9,13 @@ edition = "2021"
 anyhow = "1.0.71"
 clap = { version = "4.3.0", features = ["derive"] }
 glob = "0.3.1"
-llm-chain = "0.11.1"
-llm-chain-openai = "0.11.1"
+llm-chain = "0.12.3"
+llm-chain-openai = "0.12.3"
+tiktoken-rs = "0.5.3"
 lopdf = "0.31.0"
-prost = "0.11.9"
+prost = "0.12.1"
 qdrant-client = "1.1.2"
-quick-xml = "0.28.2"
+quick-xml = "0.31.0"
 rayon = "1.7.0"
 rustyline = { version = "11.0.0", features = ["with-file-history"] }
 serde = { version = "1.0.163", features = ["derive"] }
