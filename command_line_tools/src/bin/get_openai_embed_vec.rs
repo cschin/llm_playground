@@ -4,11 +4,11 @@ use std::io::{BufReader, Read};
 use std::path::PathBuf;
 
 use glob::glob;
-use llm_chain::text_splitter::*;
 use llm_chain::traits::Embeddings;
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
 use serde::{Deserialize, Serialize};
+use tiktoken_rs::p50k_base;
 
 #[derive(Parser, Debug)]
 #[clap(name = "get_open_ai_embed_vec")]
@@ -124,6 +124,9 @@ async fn main() {
     let mut document_id_tuple: Vec<(String, usize)> = Vec::new();
     let mut document_id = 0_usize;
     let path_to_nxm_files = args.path_to_nxm_files + "/*.nxml";
+
+    let bpe = p50k_base().unwrap();
+
     for e in glob(&path_to_nxm_files).expect("Failed to read glob pattern") {
         let path = e.unwrap();
         let file_name = path
@@ -141,26 +144,29 @@ async fn main() {
             .enumerate()
             .filter(|(_section_id, section)| !section.is_empty())
             .for_each(|(section_id, section)| {
-                let splitter = NaiveWhitespaceSplitter;
                 let max_tokens_per_chunk = 256;
                 let chunk_overlap = 32;
-                let chunks = splitter
-                    .split_text(&section, max_tokens_per_chunk, chunk_overlap)
-                    .expect("text split error")
-                    .into_iter()
-                    .filter_map(|chunk| {
-                        let chunk = chunk.trim();
-                        if chunk.len() > 5 {
-                            Some(chunk.to_string())
+
+                let tokens = bpe
+                    .split_by_token(&section, false)
+                    .expect("text split error");
+
+                let chunks = (0..tokens.len())
+                    .step_by(max_tokens_per_chunk - chunk_overlap)
+                    .map(|start| {
+                        let end = if start + max_tokens_per_chunk > tokens.len() {
+                            tokens.len()
                         } else {
-                            None
-                        }
+                            start + max_tokens_per_chunk
+                        };
+                        tokens[start..end].join("")
                     })
                     .enumerate()
                     .map(|(chunk_id, chunk)| {
                         (file_name.clone(), document_id, section_id, chunk_id, chunk)
                     })
                     .collect::<Vec<_>>();
+
                 //println!("{} {:?}", chunks.len(), chunks);
                 all_chunk.extend(chunks);
             });
