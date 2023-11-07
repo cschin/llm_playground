@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.71"
+anyhow = "1.0.75"
 clap = { version = "4.3.0", features = ["derive"] }
 glob = "0.3.1"
 llm-chain = "0.12.3"
@@ -22,3 +22,15 @@ serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0.96"
 shellexpand = "3.1.0"
 tokio = { version = "1.28.1", features = ["full"] }
+candle-core = { git = "https://github.com/huggingface/candle.git", version = "0.3.0" }
+candle-examples = { git = "https://github.com/huggingface/candle.git", version = "0.3.0" }
+candle-nn = { git = "https://github.com/huggingface/candle.git", version = "0.3.0" }
+candle-datasets = { git = "https://github.com/huggingface/candle.git", version = "0.3.0" }
+candle-transformers = { git = "https://github.com/huggingface/candle.git", version = "0.3.0" }
+hf-hub = "0.3.2"
+safetensors = "0.4.0"
+tokenizers = { version = "0.13.4", default-features = false }
+intel-mkl-src = { version = "0.8.1", features = ["mkl-static-lp64-iomp"] }
+rustls = "0.21.8"
+tracing = "0.1.37"
+
