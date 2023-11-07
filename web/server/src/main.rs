@@ -171,7 +171,7 @@ async fn post_query_for_answer_of_a_question(
     }
 
     //let model = Model::Other("gpt-4".to_string());
-    let model =  Model::Gpt35Turbo;
+    let model =  Model::ChatGPT3_5Turbo;
     let per_invocation = PerInvocation::new().for_model(model);
     let per_executor = PerExecutor { api_key: None };
     let exec = executor!(chatgpt, per_executor, per_invocation).unwrap();
@@ -236,7 +236,7 @@ async fn post_query_for_summary_of_a_topic(
     }
 
     //let model = Model::Other("text-davinci-002".to_string());
-    let model =  Model::Gpt35Turbo;
+    let model =  Model::ChatGPT3_5Turbo;
     let per_invocation = PerInvocation::new().for_model(model);
     let per_executor = PerExecutor { api_key: None };
     let exec = executor!(chatgpt, per_executor, per_invocation).unwrap();
