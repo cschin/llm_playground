@@ -11,18 +11,13 @@ use std::io::{BufReader, Read};
 use std::path::PathBuf;
 
 use glob::glob;
-use llm_chain::traits::Embeddings;
 use quick_xml::events::Event;
 use quick_xml::reader::Reader;
 use serde::{Deserialize, Serialize};
-use tiktoken_rs::p50k_base;
 
-use candle_transformers::models::mistral::{Config, Model as Mistral};
-use candle_transformers::models::quantized_mistral::Model as QMistral;
-
-use candle_core::{self, utils, DType, Device, Module, Tensor};
+use candle_transformers::models::mistral::Config;
+use candle_core::{self, Device, Module, Tensor};
 use candle_examples::token_output_stream::TokenOutputStream;
-use candle_nn::VarBuilder;
 use candle_transformers::quantized_var_builder;
 use hf_hub::{api::sync::Api, Repo, RepoType};
 use tokenizers::Tokenizer;
