@@ -1,17 +1,16 @@
 mod query_qdrant_db;
 use crate::query_qdrant_db::*;
 use axum::{
-    body::{boxed, Body},
     http::{Response, StatusCode},
     routing::{get, post},
     Json, Router,
 };
+use axum::body::Body;
 use clap::Parser;
 use llm_chain::{
-    chains::conversation::Chain, executor, output::Output, parameters, prompt, step::Step,
+    chains::conversation::Chain, executor, output::Output, parameters, prompt, step::Step, options::{Options, ModelRef, OptionsBuilder},
 };
-use llm_chain_openai::chatgpt::{Model, PerInvocation, PerExecutor};
-//use llm_chain_openai::chatgpt::{Executor, Model, PerExecutor, PerInvocation};
+use llm_chain_openai::chatgpt::Model;
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::{
@@ -59,15 +58,15 @@ async fn main() {
     let app = Router::new()
         .route(
             "/api/post_query_for_similarity_search",
-            post(  post_query_for_similarity_search ),
+            post(post_query_for_similarity_search),
         )
         .route(
             "/api/post_query_for_answer_of_a_question",
-            post( post_query_for_answer_of_a_question ),
+            post(post_query_for_answer_of_a_question),
         )
         .route(
             "/api/post_query_for_summary_of_a_topic",
-            post( post_query_for_summary_of_a_topic ),
+            post(post_query_for_summary_of_a_topic),
         )
         .layer(
             CorsLayer::new()
@@ -88,7 +87,7 @@ async fn main() {
                                 Err(_) => {
                                     return Response::builder()
                                         .status(StatusCode::NOT_FOUND)
-                                        .body(boxed(Body::from("index file not found")))
+                                        .body(Body::from("index file not found"))
                                         .unwrap()
                                 }
                                 Ok(index_content) => index_content,
@@ -96,27 +95,30 @@ async fn main() {
 
                             Response::builder()
                                 .status(StatusCode::OK)
-                                .body(boxed(Body::from(index_content)))
+                                .body(Body::from(index_content))
                                 .unwrap()
                         }
-                        _ => res.map(boxed),
+                        _ => res.map(Body::new),
+
                     }
                 }
                 Err(_err) => Response::builder()
                     .status(StatusCode::INTERNAL_SERVER_ERROR)
-                    .body(boxed(Body::from("internal errors")))
+                    .body(Body::from("internal errors"))
                     .expect("error response"),
             }
         }));
 
     // run it
     let addr = SocketAddr::from((
-        IpAddr::from_str(opt.addr.as_str()).unwrap_or(IpAddr::V6(Ipv6Addr::LOCALHOST)),
-        opt.port,
+         IpAddr::from_str(opt.addr.as_str()).unwrap_or(IpAddr::V6(Ipv6Addr::LOCALHOST)),
+         opt.port,
     ));
+    let listener = tokio::net::TcpListener::bind(addr)
+    .await
+    .unwrap();
     println!("listening on {}", addr);
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
+    axum::serve(listener, app)
         .await
         .unwrap();
 }
@@ -141,7 +143,6 @@ async fn post_query_for_answer_of_a_question(
     Json(query): Json<QueryText>,
 ) -> Json<Option<Vec<DocumentRecord>>> {
     let docs = query_for_sections(&query.text, query.topn).await;
- 
 
     let context = if let Ok(records) = docs {
         records
@@ -170,17 +171,17 @@ async fn post_query_for_answer_of_a_question(
         return Json(None);
     }
 
-    //let model = Model::Other("gpt-4".to_string());
-    let model =  Model::ChatGPT3_5Turbo;
-    let per_invocation = PerInvocation::new().for_model(model);
-    let per_executor = PerExecutor { api_key: None };
-    let exec = executor!(chatgpt, per_executor, per_invocation).unwrap();
+    
+    let model = ModelRef::from_model_name(Model::Gpt35Turbo.to_string());
+    let mut options =  OptionsBuilder::new();
+    options.add_option(llm_chain::options::Opt::Model(model));
+    let options = options.build();
+    let exec = executor!(chatgpt, options).unwrap();
 
-
-
-    let mut chain = Chain::new(
-                prompt!(system: "You are an assistant for making scientific recommendations.")).unwrap();
-    dbg!(&context); 
+    let mut chain =
+        Chain::new(prompt!(system: "You are an assistant for making scientific recommendations."))
+            .unwrap();
+    dbg!(&context);
 
     let res = chain
         .send_message(
@@ -191,9 +192,9 @@ async fn post_query_for_answer_of_a_question(
             &exec,
         )
         .await
-        .unwrap();
+        .unwrap().to_immediate().await.unwrap();
 
-    let text = res.primary_textual_output().await;
+    let text = res.primary_textual_output();
     let r = DocumentRecord {
         text,
         ..Default::default()
@@ -201,12 +202,10 @@ async fn post_query_for_answer_of_a_question(
     Json(Some(vec![r]))
 }
 
-
 async fn post_query_for_summary_of_a_topic(
     Json(query): Json<QueryText>,
 ) -> Json<Option<Vec<DocumentRecord>>> {
     let docs = query_for_sections(&query.text, query.topn).await;
- 
 
     let context = if let Ok(records) = docs {
         records
@@ -235,17 +234,16 @@ async fn post_query_for_summary_of_a_topic(
         return Json(None);
     }
 
-    //let model = Model::Other("text-davinci-002".to_string());
-    let model =  Model::ChatGPT3_5Turbo;
-    let per_invocation = PerInvocation::new().for_model(model);
-    let per_executor = PerExecutor { api_key: None };
-    let exec = executor!(chatgpt, per_executor, per_invocation).unwrap();
-
-
-
-    let mut chain = Chain::new(
-                prompt!(system: "You are an assistant for making scientific recommendations.")).unwrap();
-    dbg!(&context); 
+    let model = ModelRef::from_model_name(Model::Gpt35Turbo.to_string());
+    let mut options =  OptionsBuilder::new();
+    options.add_option(llm_chain::options::Opt::Model(model));
+    let options = options.build();
+    let exec = executor!(chatgpt, options).unwrap();
+    
+    let mut chain =
+        Chain::new(prompt!(system: "You are an assistant for making scientific recommendations."))
+            .unwrap();
+    dbg!(&context);
 
     let res = chain
         .send_message(
@@ -256,11 +254,11 @@ async fn post_query_for_summary_of_a_topic(
             &exec,
         )
         .await
-        .unwrap();
+        .unwrap().to_immediate().await.unwrap();
 
-    dbg!(res.clone());
+    //dbg!(res);
 
-    let text = res.primary_textual_output().await;
+    let text = res.primary_textual_output();
     let r = DocumentRecord {
         score: None,
         file_name: None,
