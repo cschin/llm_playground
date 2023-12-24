@@ -141,7 +141,7 @@ async fn main() -> Result<()> {
             collection_name: collection_name.into(),
             vectors_config: Some(VectorsConfig {
                 config: Some(Config::Params(VectorParams {
-                    size: 1536,
+                    size: 4096,
                     distance: Distance::Cosine.into(),
                     hnsw_config: None,
                     quantization_config: None,
